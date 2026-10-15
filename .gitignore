@@ -1,0 +1,15 @@
+# Keep local/private network artifacts out of this public repository.
+.DS_Store
+__pycache__/
+*.pyc
+.env
+.env.*
+*.pem
+*.key
+*.pcap
+*.pcapng
+*.db
+*.log
+snapshot.json
+endpoints.json
+verification*.json
