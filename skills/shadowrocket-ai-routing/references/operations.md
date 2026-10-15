@@ -8,7 +8,9 @@
 | 系统 PF 和守护服务 | 物理出口限制、代理入口、国内目的地例外 | 按应用身份识别全部 AI 或未来 CDN |
 | 节点同步助手 | 授权读取非凭据元数据，供入口更新 | 每个节点或每个订阅始终可用 |
 
-已有安装可能使用 `ShadowrocketEgressGuard`、`ShadowrocketNodeSync`、`local.shadowrocket.egress-guard`、`local.shadowrocket.node-sync` 等名称。这些仅为发现线索，必须核对实际安装与来源；本仓库不提供这些程序。
+首次在另一台 Mac 安装，先阅读 [install.md](install.md)。迁移版使用独立服务 `org.shadowrocket-routing.guard` 与 `org.shadowrocket-routing.node-sync`，不叠加覆盖旧保护。
+
+已有旧版安装可能使用 `ShadowrocketEgressGuard`、`ShadowrocketNodeSync`、`local.shadowrocket.egress-guard`、`local.shadowrocket.node-sync` 等名称。这些仅为旧版发现线索，必须核对实际安装与来源；本仓库提供迁移版实现，不自动升级上述旧版安装。
 
 ### 检查与修改
 
@@ -34,7 +36,7 @@ PF 过滤地址/协议，不能保证所有 AI 版本都不产生任何直连流
 - 只读取用户授权的精确目录，不以 root 或其他进程绕过应用目录隐私限制。
 - 元数据仅保留来源分类、显示名、主机、协议、原端口/范围等必需项。公开分享再去除个人名称与真实地址，不输出密码、UUID、订阅链接或完整归档。
 - 检查快照时间、结构、数量及协议完整性。`schema_unconfirmed`、零节点、目录错误、解析失败时保留旧规则。
-- DNS 变化需更新入口地址；不永久固定过期 IP。白名单成功不是服务端协议/凭据成功。
+- DNS 变化需更新入口地址；不永久固定过期 IP。迁移版只对节点域名使用独立国内加密 DoH（HTTP/1.1、证书校验），不依赖尚未放行的新代理；AI 目标不会走该启动解析器。白名单成功不是服务端协议/凭据成功。
 - 切换订阅一般保留活动规则；切全局直连/代理、启用其他配置、关闭服务、改用 Clash、迁移机器会改变前提。不能承诺「永远自动生效」。
 
 ## 国内服务打不开
@@ -71,6 +73,8 @@ PF 过滤地址/协议，不能保证所有 AI 版本都不产生任何直连流
 5. 按 IPv4/IPv6、具体目标和场景分别报告；没有全球 IPv6 上联就写未实测。
 
 ## iPhone 与 Tailscale
+
+迁移版不预置旧机器的 Tailscale 中继/UDP 例外；检测到其他同时连接的 VPN 时拒绝初装，需要另行审阅共存策略。
 
 独立 VPN App 会竞争 iPhone 的 VPN 通道。支持内置 Tailscale 的 Shadowrocket 版本可在同一隧道内处理代理和 tailnet 流量。
 

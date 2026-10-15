@@ -7,7 +7,7 @@ description: 维护 macOS Shadowrocket 的国内直连、国外 AI 强制代理�
 
 目标：国内网站与国内 AI 按规则直连；ChatGPT、Codex、Claude 等国外 AI 走选定代理；代理故障和重连期间，系统规则继续阻断受保护目标的公网直连。
 
-此 Skill 提供维护方法、脱敏配置片段和经验，**不包含可直接安装的防火墙程序**。导入规则、启用 TUN、看到 VPN「已连接」，均不等于已实现系统级断线阻断。
+本 Skill 2.0 附带可迁移 PF 守护程序、沙盒节点同步 App 源码与构建器、配置合并器及有限故障验证器。**首次安装必须读取 [references/install.md](references/install.md)**，按目标 Mac 生成安装计划并取得目录/管理员授权；不复制另一台机器的计划或凭据。安装完成与故障验证通过分别报告。
 
 ## 确认实际状态
 
@@ -28,14 +28,23 @@ description: 维护 macOS Shadowrocket 的国内直连、国外 AI 强制代理�
 6. 保持 `udp-policy-not-supported-behaviour = REJECT`。本例保留 `dns-direct-system = false` 与 `dns-direct-fallback-proxy = false`，不引入额外系统解析和回退。
 7. 保存、读回差异、编译成功，并确认「全局路由 → 配置」与活动文件勾选。保存成功不代表生效。
 
+## 迁移安装
+
+1. 从发布包取用实际 App，或在目标 Mac 构建。源码入口为 [assets/node-sync/build.sh](assets/node-sync/build.sh)，CLI 为 [scripts/portable_guard.py](scripts/portable_guard.py)。
+2. 普通用户运行 `setup-helper`，只授权本机精确 Shadowrocket 共享目录，等待完整快照。
+3. 使用 `discover --offline` 只读识别；通过 UI 导出配置，`merge-profile` 生成私有候选，再通过 UI 备份、应用、编译、确认活动配置和原出口。
+4. `plan` 动态识别端口、用户、VPN 标识、网卡、节点及原协议/端口；未知 SOCKS5 链关系通过 UI 一次核对，不能自动猜测或放行链式出口。
+5. 用户授权后 `install --profile-applied`，随后在该目标 Mac 做一次必要的 `verify --fault-test`。发现旧保护/自定义 PF/其他活动 VPN 时停止并审阅，不覆盖、叠加或自动卸载。
+6. 执行参数、 前置要求、回退和版本限制以安装说明为准。该执行流程不能证明尚未接入的另一台物理 Mac 已安装或通过验证。
+
 ## 系统阻断与节点更新
 
-先读 [references/operations.md](references/operations.md#macos-系统保护)。以下是设计约束，不能直接替代经过核对的 PF 安装实现。
+先读 [references/operations.md](references/operations.md#macos-系统保护)。以下约束由迁移组件实现，并仍须结合目标系统预检。
 
 - 系统 PF 限制物理出口，只允许必要局域网通信、明确代理入口与国内目的地；境外公网默认拒绝，已知 AI 拒绝优先。TUN 与物理连接状态不能互相授权。
 - 国内域名和 PF 的 IP 白名单可能不一致，尤其是境外 CDN/远控对端。定位具体地址与规则，不要关闭 PF、放开所有 443 或整个云厂商网段。
 - 节点同步器只读取用户授权的精确来源目录；只同步必需非凭据元数据。结构/完整性不明确时保留旧规则并报告。
-- 验证当前清单、地址和协议/端口，生成候选、冲突与语法校验后原子更新本方案规则；失败保留上次有效规则。A→B 链路中的 B 不得获物理直连例外。
+- 验证当前清单、地址和协议/端口，生成候选、冲突与语法校验后原子更新本方案规则；失败保留上次有效规则。入口节点用独立国内加密 DoH 启动解析，AI 地址维护仍经代理，避免新节点未放行时的解析死锁。A→B 链路中的 B 不得获物理直连例外。
 - 切订阅不应替换活动分流配置。新入口未同步时应保持阻断；不能承诺任意新节点、未来版本或其他客户端自动兼容。
 - 系统确实要求管理员权限时，说明用途并提供已审阅脚本的完整单行命令，用户自行在终端输入密码。不要索要密码或复用未经检查的私人脚本路径。
 

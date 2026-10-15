@@ -13,3 +13,9 @@ __pycache__/
 snapshot.json
 endpoints.json
 verification*.json
+# Portable packages and private per-machine plans are generated, never published as source.
+dist/
+build/
+private/
+.runtime/
+*.new-*

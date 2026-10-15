@@ -1,37 +1,51 @@
-# Shadowrocket Routing Skill
+# Shadowrocket Routing Skill · 2.0
 
-面向 Codex 的中文 Skill：维护 **国内直连、国外 AI 走代理、代理故障时保持系统阻断**，并保留当前出口、所有端口与其他订阅。
+面向 Codex 的中文 Skill 与可迁移 macOS 组件：**国内直连、国外 AI 走原代理、故障时系统阻断直连**，保留原出口、端口与订阅。
 
-这是脱敏的维护指南与配置片段，**不是 VPN 服务，也不自带系统防火墙安装器**。安装 Skill 或导入片段不等于完成断线防泄露保护。
+## 包含什么
 
-## 内容
+- [Skill 入口](skills/shadowrocket-ai-routing/SKILL.md)：识别、安装、维护与最少量验证流程。
+- [完整安装指南](skills/shadowrocket-ai-routing/references/install.md)：另一台 Mac 的授权、分流合并、安装计划、PF 安装、验证和回退。
+- [迁移 CLI](skills/shadowrocket-ai-routing/scripts/portable_guard.py)：发现真实端口/VPN/网卡、动态节点计划、系统服务、白名单同步与故障验证。
+- [沙盒节点助手](skills/shadowrocket-ai-routing/assets/node-sync/NodeSync.swift)：用户授权后只读节点数据，无网络权限，无固定用户目录写入例外。
+- [分流片段](skills/shadowrocket-ai-routing/assets/routing-fragment.conf)与配置合并器：国内 DoH、微信/网易等直连、国外 AI 优先代理、最终代理。
+- [维护与边界](skills/shadowrocket-ai-routing/references/operations.md)、[历史案例](skills/shadowrocket-ai-routing/references/verified-case.md)。
 
-- [Skill 入口](skills/shadowrocket-ai-routing/SKILL.md)：检查、合并配置、节点同步与最少量验证。
-- [分流片段](skills/shadowrocket-ai-routing/assets/routing-fragment.conf)：国内 DoH、国外 AI 优先代理、微信/网易等直连、最终代理。仅用于合并，不整份覆盖已有配置。
-- [维护说明](skills/shadowrocket-ai-routing/references/operations.md)：PF 与应用规则的职责、更新节点、timeout、回退、iPhone/Tailscale 边界。
-- [历史案例](skills/shadowrocket-ai-routing/references/verified-case.md)：UU 远程与公众号恢复的用户确认，以及早期故障实测的有限证据。
+## 在另一台 Mac 使用
 
-## 安装和使用
-
-把 `skills/shadowrocket-ai-routing` 整个文件夹放入 Codex 技能目录（通常为 `~/.codex/skills/`；已有同名技能时先备份）。让 Codex 重新发现技能，然后使用：
+将 `skills/shadowrocket-ai-routing` 文件夹安装到 Codex 技能目录（通常为 `~/.codex/skills/`，已有同名技能时先备份），然后请求：
 
 ```text
-使用 $shadowrocket-ai-routing 排查国内服务打不开，保留当前出口、全部端口、订阅和断线阻断；只验证受影响服务。
+使用 $shadowrocket-ai-routing 在这台 Mac 配置国内直连、国外 AI 代理与断线阻断，自动识别端口和节点，保留当前出口和其他订阅。
 ```
 
-也可请求检查节点更新后的白名单同步。Skill 会先发现现有安装；缺少 PF/同步器实现时，应报告缺失，不能声称自动安装或已经验证。
+先读[安装指南](skills/shadowrocket-ai-routing/references/install.md)。支持 macOS 13+；需要 Python 3.9+ 与 Apple Command Line Tools。必须在目标 Mac 首次授权节点目录，并为 PF/系统服务提供管理员授权。Skill 本身、VPN 开关或导入配置不代表保护已经通过验证。
 
-## 核心约束
+可从 [Releases](https://github.com/Joey0819/shadowrocket-routing-skill/releases) 下载带实际通用 App 的迁移包；也可在仓库根目录构建：
 
-1. 国外 AI 规则优先 PROXY，国内服务与国内 AI 按规则 DIRECT，未知目标最终 PROXY。
-2. 国内普通解析使用国内加密 DNS，避免依赖故障代理；保留 UDP 不支持时 REJECT。
-3. 系统阻断独立于应用分流。国内域名与物理 IP 白名单可能不一致，境外 CDN 或远控对端需具体排查。
-4. 节点同步失败保持上一有效规则，不自动开放公网直连。切订阅时保留活动配置与守护服务。
-5. 保留真实出口、协议、端口、其他订阅与系统根规则；不把修复扩大成全局重置。
-6. 只做与变更有关的验证。主页连通不能替代文章/远控；历史 IPv4 报告不能扩大为所有未来场景的保证。
+```sh
+python3 tools/build_release.py
+```
 
-本仓库没有节点凭据、订阅链接、私人出口/节点地址、设备标识、抓包或原始日志。手机 Tailscale 共存说明不代表手机已有 macOS PF 的同等保护。
+发布包包含 arm64/x86_64 App、源码、Skill、文件校验清单和外部 SHA256。App 为 ad-hoc 签名、未公证；不要关闭系统安全保护来运行。目标 Mac 可从源码构建后自行批准。
 
-## 验证范围
+## 重要约束
 
-Skill 已通过创建工具的格式校验与离线内容审查。配置片段依据一次已生效的 macOS 配置整理，不是逐台设备验证过的独立完整配置。维护期间不应仅为阅读或安装此 Skill 中断现有网络。
+- 安装器不会直接写厂商私有数据或改节点/订阅；活动分流通过 Shadowrocket UI 备份、合并、编译与确认。
+- 识别真实 loopback listener，不固定用户名、UID、端口、节点数量或出口 IP。SOCKS5 是否为链式出口不能仅靠元数据推断，首次需核对一次，之后普通受支持节点按原端口自动同步。
+- AI 拒绝先于国内/入口例外，境外公网默认拒绝；目录读取、DNS、候选校验失败时保留旧规则。节点启动解析用独立国内加密 DoH，AI 地址维护仍走代理。
+- 遇到旧版保护、自定义 PF 或其他同时连接的 VPN，停止初装并审阅，不覆盖或自动卸载。系统 PF 影响物理网络，境外 CDN/远控对端可能需单独适配。
+- 不承诺识别所有未来 AI 目标、服务器地理位置或所有系统启动阶段。IPv4/IPv6、故障阶段与实际用户操作的证据分别报告。
+
+## 验证与开发
+
+```sh
+python3 -m unittest discover -s tests -v
+python3 tools/build_release.py
+```
+
+测试不需要 sudo，不修改真实分流、不启停 VPN、不激活 PF。macOS 上额外使用实际 PF 解析器校验候选语法；构建会检查实际签名 App 的节点解析、窗口生命周期及发布包解压后的签名/校验值。
+
+开发机的只读发现已识别正在使用的监听端口，并检测到已有旧保护，因此未安装第二套规则。尚未在另一台物理 Mac 完成管理员安装和物理抓包；首次安装必须运行目标机验证，不能复用历史报告。
+
+本仓库不含真实节点/出口地址、订阅链接、节点凭据、用户目录、设备标识、抓包或原始日志。测试地址、端口、用户路径为合成夹具；本机生成的计划/日志/发布产物默认忽略。
